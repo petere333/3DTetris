@@ -34,7 +34,30 @@ void make_fragmentShaders();
 void InitBuffer();
 void initGame();
 void updateGame();
+void clearSpace();
 
+int myBlockID;
+int myBlock[3][3][3];
+int myRotX, myRotY, myRotZ;
+int myX, myY, myZ;
+
+int canMove;
+//1=S 2=L 3=I 4=T 5=O
+int block1[3][3][3]
+=
+{
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}},
+
+	{{0,0,0},
+	{0,2,2},
+	{2,2,0}},
+
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}}
+};
 GLuint make_shaderProgram();
 
 GLfloat background[24][3]
@@ -261,7 +284,7 @@ GLfloat originColor[24][3]
 };
 GLint GameSpace[12][12][12];
 GLint tempSpace[12][12][12];
-
+GLint blockSpace[12][12][12];
 
 GLuint MatrixID;
 
@@ -567,24 +590,215 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'O':
-	case 'o':
+	case 'o'://회전
 		rot = glm::mat4(1.0f);
 		rot = glm::rotate(rot, glm::radians(3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = model * rot;
 		break;
 	case 'P':
-	case 'p':
+	case 'p'://역회전
 		rot = glm::mat4(1.0f);
 		rot = glm::rotate(rot, glm::radians(3.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		model = model * rot;
 		break;
-
+	case 'j':
+	case 'J':
+		if (myY < 0)
+		{
+			myY = 0;
+		}
+		if (myZ < 0)
+		{
+			myZ = 0;
+		}
+		if (myY > 9)
+		{
+			myY = 9;
+		}
+		if (myZ > 9)
+		{
+			myZ = 9;
+		}
+		myRotX += 1;
+		myRotX = myRotX % 4;// 회전할 횟수 1 증가시키고 4번단위로 0으로 초기화
+		break;
+	case 'k':
+	case 'K':
+		if (myX < 0)
+		{
+			myX = 0;
+		}
+		if (myZ < 0)
+		{
+			myZ = 0;
+		}
+		if (myX > 9)
+		{
+			myX = 9;
+		}
+		if (myZ > 9)
+		{
+			myZ = 9;
+		}
+		myRotY += 1;
+		myRotY = myRotY % 4;// 회전할 횟수 1 증가시키고 4번단위로 0으로 초기화
+		break;
+	case 'l':
+	case 'L':
+		if (myY < 0)
+		{
+			myY = 0;
+		}
+		if (myX < 0)
+		{
+			myX = 0;
+		}
+		if (myY > 9)
+		{
+			myY = 9;
+		}
+		if (myX > 9)
+		{
+			myX = 9;
+		}
+		myRotZ += 1;
+		myRotZ = myRotZ % 4;// 회전할 횟수 1 증가시키고 4번단위로 0으로 초기화
+		break;
+	case 'w':
+	case 'W':
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					if ((myX + i <= 11 && myY + j <= 11 && myZ + k <= 11) && (myX + i >= 0 && myY + j >= 0 && myZ + k >= 0))
+						blockSpace[myX + i][myY + j][myZ + k] = 0;
+				}
+			}
+		}
+		canMove = 1;
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					if (myBlock[i][j][k] > 0 && myY + j <= 0)
+					{
+						canMove = 0;
+					}
+				}
+			}
+		}
+		if (canMove)
+		{
+			myY -= 1;
+		}
+		break;
+	case 's':
+	case 'S':
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					if ((myX + i <= 11 && myY + j <= 11 && myZ + k <= 11) && (myX + i >= 0 && myY + j >= 0 && myZ + k >= 0))
+					blockSpace[myX + i][myY + j][myZ + k] = 0;
+				}
+			}
+		}
+		canMove = 1;
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					if (myBlock[i][j][k] > 0 && myY + j >= 11)
+					{
+						canMove = 0;
+					}
+				}
+			}
+		}
+		if (canMove)
+		{
+			myY += 1;
+		}
+		break;
+	case 'a':
+	case 'A':
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					if ((myX + i <= 11 && myY + j <= 11 && myZ + k <= 11) && (myX + i >= 0 && myY + j >= 0 && myZ + k >= 0))
+					blockSpace[myX + i][myY + j][myZ + k] = 0;
+				}
+			}
+		}
+		canMove = 1;
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					if (myBlock[i][j][k] > 0 && myX + i <= 0)
+					{
+						canMove = 0;
+					}
+				}
+			}
+		}
+		if (canMove)
+		{
+			myX -= 1;
+		}
+		break;
+	case 'd':
+	case 'D':
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					if ((myX + i <= 11 && myY + j <= 11 && myZ + k <= 11) && (myX + i >= 0 && myY + j >= 0 && myZ + k >= 0))
+					blockSpace[myX + i][myY + j][myZ + k] = 0;
+				}
+			}
+		}
+		canMove = 1;
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					if (myBlock[i][j][k] > 0 && myX + i >= 11)
+					{
+						canMove = 0;
+					}
+				}
+			}
+		}
+		if (canMove)
+		{
+			myX += 1;
+		}
+		break;
 	}
 	glutPostRedisplay();
 }
 
 void initGame()
 {
+	//게임 공간 지우기
 	for (int i = 0; i < 12; ++i)
 	{
 		for (int j = 0; j < 12; ++j)
@@ -593,9 +807,11 @@ void initGame()
 			{
 				GameSpace[i][j][k] = 0;
 				tempSpace[i][j][k] = 0;
+				blockSpace[i][j][k] = 0;
 			}
 		}
 	}
+
 	tempSpace[0][0][0] = 1;
 	tempSpace[0][0][1] = 2;
 	tempSpace[0][0][2] = 3;
@@ -603,16 +819,110 @@ void initGame()
 	tempSpace[1][1][0] = 4;
 	tempSpace[2][2][0] = 4;
 	tempSpace[3][3][0] = 4;
+	myBlockID = 1;
+	myRotX = 0;
+	myRotY = 0;
+	myRotZ = 0;
+	myX = 5;
+	myY = 5;
+	myZ = 9;
 }
 void updateGame()
 {
+	//블록이 S자
+	int ok;
+	if (myBlockID == 1)
+	{
+		for (int i = 0; i < 3; ++i)//S자 블록 데이터 복사
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					myBlock[i][j][k] = block1[i][j][k];
+				}
+			}
+		}
+		//x축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotX; ++n)
+		{
+			for (int x = 0; x < 3; ++x)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp00 = myBlock[x][0][0];
+					myBlock[x][0][0] = myBlock[x][1][0];
+					myBlock[x][1][0] = myBlock[x][2][0];
+					myBlock[x][2][0] = myBlock[x][2][1];
+					myBlock[x][2][1] = myBlock[x][2][2];
+					myBlock[x][2][2] = myBlock[x][1][2];
+					myBlock[x][1][2] = myBlock[x][0][2];
+					myBlock[x][0][2] = myBlock[x][0][1];
+					myBlock[x][0][1] = temp00;
+				}
+			}
+		}
+			
+		//y축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotY; ++n)
+		{
+			for (int y = 0; y < 3; ++y)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][y][0];
+					myBlock[0][y][0] = myBlock[1][y][0];
+					myBlock[1][y][0] = myBlock[2][y][0];
+					myBlock[2][y][0] = myBlock[2][y][1];
+					myBlock[2][y][1] = myBlock[2][y][2];
+					myBlock[2][y][2] = myBlock[1][y][2];
+					myBlock[1][y][2] = myBlock[0][y][2];
+					myBlock[0][y][2] = myBlock[0][y][1];
+					myBlock[0][y][1] = temp;
+				}
+			}
+		}
+		
+		//z축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotZ; ++n)
+		{
+			for (int z = 0; z < 3; ++z)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][0][z];
+					myBlock[0][0][z] = myBlock[1][0][z];
+					myBlock[1][0][z] = myBlock[2][0][z];
+					myBlock[2][0][z] = myBlock[2][1][z];
+					myBlock[2][1][z] = myBlock[2][2][z];
+					myBlock[2][2][z] = myBlock[1][2][z];
+					myBlock[1][2][z] = myBlock[0][2][z];
+					myBlock[0][2][z] = myBlock[0][1][z];
+					myBlock[0][1][z] = temp;
+				}
+			}
+		}
+	}
+	//현재 떨구고 있는 블록을 임시공간에 대입
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = 0; j < 3; ++j)
+		{
+			for (int k = 0; k < 3; ++k)
+			{
+				if ((myX + i <= 11 && myY + j <= 11 && myZ + k <= 11) && (myX+i>=0 && myY+j>=0 &&myZ+k>=0))
+				blockSpace[myX + i][myY + j][myZ + k] = myBlock[i][j][k];
+			}
+		}
+	}
+	//임시공간에 처리 완료 후 게임공간에 대입
 	for (int i = 0; i < 12; ++i)
 	{
 		for (int j = 0; j < 12; ++j)
 		{
 			for (int k = 0; k < 12; ++k)
 			{
-				GameSpace[i][j][k] = tempSpace[i][j][k];
+				GameSpace[i][j][k] = tempSpace[i][j][k]+blockSpace[i][j][k];
 			}
 		}
 	}
