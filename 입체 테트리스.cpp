@@ -35,12 +35,15 @@ void make_fragmentShaders();
 void InitBuffer();
 void initGame();
 void updateGame();
+int isEnded();
+int collides(int dir);
+int isGameOver();
 
 int myBlockID;
 int myBlock[3][3][3];
 int myRotX, myRotY, myRotZ;
 int myX, myY, myZ;
-int quit;
+int quit,bye;
 int canMove;
 //1=S 2=L 3=I 4=T 5=O
 int block1[3][3][3]//S
@@ -395,14 +398,15 @@ GLvoid GameLoop(int value)
 {
 	updateGame();
 	glutPostRedisplay();
-	if (quit == 0)
+	if (quit == 1)
 	{
-		glutTimerFunc(30, GameLoop, 1);
+		initGame();
 	}
-	else
+	if (bye == 1)
 	{
 		PostQuitMessage(0);
 	}
+	glutTimerFunc(30, GameLoop, 1);
 }
 void make_vertexShaders()
 {
@@ -746,137 +750,56 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		break;
 	case 'w':
 	case 'W':
-		for (int i = 0; i < 3; ++i)
-		{
-			for (int j = 0; j < 3; ++j)
-			{
-				for (int k = 0; k < 3; ++k)
-				{
-					if ((myX + i <= 11 && myY + j <= 11 && myZ + k <= 11) && (myX + i >= 0 && myY + j >= 0 && myZ + k >= 0))
-						blockSpace[myX + i][myY + j][myZ + k] = 0;
-				}
-			}
-		}
-		canMove = 1;
-		for (int i = 0; i < 3; ++i)
-		{
-			for (int j = 0; j < 3; ++j)
-			{
-				for (int k = 0; k < 3; ++k)
-				{
-					if (myBlock[i][j][k] > 0 && myY + j <= 0)
-					{
-						canMove = 0;
-					}
-				}
-			}
-		}
-		if (canMove)
+		if (collides(1) == 0)
 		{
 			myY -= 1;
 		}
 		break;
 	case 's':
 	case 'S':
-		for (int i = 0; i < 3; ++i)
-		{
-			for (int j = 0; j < 3; ++j)
-			{
-				for (int k = 0; k < 3; ++k)
-				{
-					if ((myX + i <= 11 && myY + j <= 11 && myZ + k <= 11) && (myX + i >= 0 && myY + j >= 0 && myZ + k >= 0))
-					blockSpace[myX + i][myY + j][myZ + k] = 0;
-				}
-			}
-		}
-		canMove = 1;
-		for (int i = 0; i < 3; ++i)
-		{
-			for (int j = 0; j < 3; ++j)
-			{
-				for (int k = 0; k < 3; ++k)
-				{
-					if (myBlock[i][j][k] > 0 && myY + j >= 11)
-					{
-						canMove = 0;
-					}
-				}
-			}
-		}
-		if (canMove)
+		if (collides(2) == 0)
 		{
 			myY += 1;
 		}
 		break;
 	case 'a':
 	case 'A':
-		for (int i = 0; i < 3; ++i)
-		{
-			for (int j = 0; j < 3; ++j)
-			{
-				for (int k = 0; k < 3; ++k)
-				{
-					if ((myX + i <= 11 && myY + j <= 11 && myZ + k <= 11) && (myX + i >= 0 && myY + j >= 0 && myZ + k >= 0))
-					blockSpace[myX + i][myY + j][myZ + k] = 0;
-				}
-			}
-		}
-		canMove = 1;
-		for (int i = 0; i < 3; ++i)
-		{
-			for (int j = 0; j < 3; ++j)
-			{
-				for (int k = 0; k < 3; ++k)
-				{
-					if (myBlock[i][j][k] > 0 && myX + i <= 0)
-					{
-						canMove = 0;
-					}
-				}
-			}
-		}
-		if (canMove)
+		if (collides(3) == 0)
 		{
 			myX -= 1;
 		}
 		break;
 	case 'd':
 	case 'D':
-		for (int i = 0; i < 3; ++i)
-		{
-			for (int j = 0; j < 3; ++j)
-			{
-				for (int k = 0; k < 3; ++k)
-				{
-					if ((myX + i <= 11 && myY + j <= 11 && myZ + k <= 11) && (myX + i >= 0 && myY + j >= 0 && myZ + k >= 0))
-					blockSpace[myX + i][myY + j][myZ + k] = 0;
-				}
-			}
-		}
-		canMove = 1;
-		for (int i = 0; i < 3; ++i)
-		{
-			for (int j = 0; j < 3; ++j)
-			{
-				for (int k = 0; k < 3; ++k)
-				{
-					if (myBlock[i][j][k] > 0 && myX + i >= 11)
-					{
-						canMove = 0;
-					}
-				}
-			}
-		}
-		if (canMove)
+		if (collides(4) == 0)
 		{
 			myX += 1;
 		}
 		break;
 	case 32:
+		while (isEnded() == 0)
+		{
+			myZ -= 1;
+		}
+		for (int i = 0; i < 3; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					tempSpace[myX + i][myY + j][myZ + k] += myBlock[i][j][k];
+				}
+			}
+		}
 		myBlockID = (rand() % 5) + 1;
 		myRotX = 0;
 		myRotY = 0;
 		myRotZ = 0;
+		myZ = 9;
+		if (isGameOver() == 1)
+		{
+			quit = 1;
+		}
 		break;
 	case 27:
 		quit = 1;
@@ -901,13 +824,7 @@ void initGame()
 		}
 	}
 	quit = 0;
-	tempSpace[0][0][0] = 1;
-	tempSpace[0][0][1] = 2;
-	tempSpace[0][0][2] = 3;
-	tempSpace[0][0][3] = 4;
-	tempSpace[1][1][0] = 4;
-	tempSpace[2][2][0] = 4;
-	tempSpace[3][3][0] = 4;
+	bye = 0;
 	myBlockID = 1;
 	myRotX = 0;
 	myRotY = 0;
@@ -1280,7 +1197,19 @@ void updateGame()
 			}
 		}
 	}
-	//현재 떨구고 있는 블록을 임시공간에 대입
+	
+	//임시공간 비우기
+	for (int i = 0; i < 12; ++i)
+	{
+		for (int j = 0; j < 12; ++j)
+		{
+			for (int k = 0; k < 12; ++k)
+			{
+				blockSpace[i][j][k] = 0;
+			}
+		}
+	}
+	//현재 떨구고 있는 블록만 임시공간에 대입
 	for (int i = 0; i < 3; ++i)
 	{
 		for (int j = 0; j < 3; ++j)
@@ -1303,4 +1232,140 @@ void updateGame()
 			}
 		}
 	}
+}
+
+int isEnded()
+{
+	int ended=0;
+	for (int x = 0; x < 3; ++x)
+	{
+		for (int y = 0; y < 3; ++y)
+		{
+			for (int z = 0; z < 3; ++z)
+			{
+				if (myBlock[x][y][z] > 0)
+				{
+					if (myZ + z > 0)
+					{
+						if (tempSpace[myX + x][myY + y][myZ + z - 1] > 0)
+						{
+							ended= 1;
+						}
+					}
+					else if (myZ + z == 0)
+					{
+						ended = 1;
+					}
+				}
+			}
+		}
+	}
+	return ended;
+}
+
+int collides(int direction)
+{
+	int collide = 0;
+	for (int x = 0; x < 3; ++x)
+	{
+		for (int y = 0; y < 3; ++y)
+		{
+			for (int z = 0; z < 3; ++z)
+			{
+				if (direction == 1)//up
+				{
+					if (myBlock[x][y][z] > 0)//블럭이 있고
+					{
+						if (myY + y > 0)//y좌표가 0 이상
+						{
+							if (tempSpace[myX + x][myY - 1 + y][myZ + z] > 0)//게임공간에 이미 블럭이 있을때
+							{
+								collide = 1;
+							}
+						}
+						else
+						{
+							collide = 1;
+						}
+					}
+				}
+				else if (direction == 2)//down
+				{
+					if (myBlock[x][y][z] > 0)//블럭이 있고
+					{
+						if (myY + y < 11)//y좌표가 11 미만
+						{
+							if (tempSpace[myX + x][myY + 1 + y][myZ + z] > 0)//게임공간에 이미 블럭이 있을때
+							{
+								collide = 1;
+							}
+						}
+						else
+						{
+							collide = 1;
+						}
+					}
+				}
+				else if (direction == 3)//left
+				{
+					if (myBlock[x][y][z] > 0)//블럭이 있고
+					{
+						if (myX + x > 0)//x좌표가 0보다 큼
+						{
+							if (tempSpace[myX + x-1][myY + y][myZ + z] > 0)//게임공간에 이미 블럭이 있을때
+							{
+								collide = 1;
+							}
+						}
+						else
+						{
+							collide = 1;
+						}
+					}
+				}
+				else if (direction == 4)//right
+				{
+					if (myBlock[x][y][z] > 0)//블럭이 있고
+					{
+						if (myX + x < 11)//x좌표가 11 미만
+						{
+							if (tempSpace[myX + x+1][myY + y][myZ + z] > 0)//게임공간에 이미 블럭이 있을때
+							{
+								collide = 1;
+							}
+						}
+						else
+						{
+							collide = 1;
+						}
+					}
+				}
+
+
+			}
+		}
+	}
+	return collide;
+}
+
+int isGameOver()
+{
+	int over = 0;
+	for (int x = 0; x < 3; ++x)
+	{
+		for (int y = 0; y < 3; ++y)
+		{
+			for (int z = 0; z < 3; ++z)
+			{
+				if (myBlock[x][y][z] > 0)
+				{
+					if (tempSpace[myX + x][myY + y][myZ + z] > 0)
+					{
+						over = 1;
+					}
+				}
+			}
+		}
+	}
+	return over;
 }
