@@ -5,7 +5,8 @@
 #include <glm/glm/glm.hpp>
 #include <glm/glm/ext.hpp>
 #include <glm/glm/gtc/matrix_transform.hpp>
-
+#include <cstdlib>
+#include <cstdio>
 #include "filein.h"
 
 
@@ -34,16 +35,15 @@ void make_fragmentShaders();
 void InitBuffer();
 void initGame();
 void updateGame();
-void clearSpace();
 
 int myBlockID;
 int myBlock[3][3][3];
 int myRotX, myRotY, myRotZ;
 int myX, myY, myZ;
-
+int quit;
 int canMove;
 //1=S 2=L 3=I 4=T 5=O
-int block1[3][3][3]
+int block1[3][3][3]//S
 =
 {
 	{{0,0,0},
@@ -53,6 +53,66 @@ int block1[3][3][3]
 	{{0,0,0},
 	{0,2,2},
 	{2,2,0}},
+
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}}
+};
+int block2[3][3][3]//L
+=
+{
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}},
+
+	{{0,1,0},
+	{0,1,0},
+	{0,1,1}},
+
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}}
+};
+int block3[3][3][3]//I
+=
+{
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}},
+
+	{{0,3,0},
+	{0,3,0},
+	{0,3,0}},
+
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}}
+};
+int block4[3][3][3]//T
+=
+{
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}},
+
+	{{0,0,0},
+	{5,5,5},
+	{0,5,0}},
+
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}}
+};
+int block5[3][3][3]//O
+=
+{
+	{{0,0,0},
+	{0,0,0},
+	{0,0,0}},
+
+	{{0,0,0},
+	{0,4,4},
+	{0,4,4}},
 
 	{{0,0,0},
 	{0,0,0},
@@ -324,6 +384,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	make_vertexShaders();
 	make_fragmentShaders();
 	shaderID = make_shaderProgram();
+	srand((unsigned int)time(NULL));
 	InitBuffer();
 	initGame();
 	glutMainLoop(); // 이벤트 처리 시작
@@ -334,7 +395,14 @@ GLvoid GameLoop(int value)
 {
 	updateGame();
 	glutPostRedisplay();
-	glutTimerFunc(30, GameLoop, 1);
+	if (quit == 0)
+	{
+		glutTimerFunc(30, GameLoop, 1);
+	}
+	else
+	{
+		PostQuitMessage(0);
+	}
 }
 void make_vertexShaders()
 {
@@ -466,7 +534,7 @@ GLvoid drawScene()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDrawArrays(GL_QUADS, 0, 24);
 
-	// 1=red 2=blue 3=green 4=yellow
+	// 1=brown 2=green 3=blue 4=yellow 5=purple
 	for (int x = 0; x < 12; ++x)
 	{
 		for (int y = 0; y < 12; ++y)
@@ -483,9 +551,9 @@ GLvoid drawScene()
 						squarePosition[i][1] += (float)y-5.5f;
 						squarePosition[i][2] += (float)z-5.5f;
 						
-						squareColor[i][0] = 1.0;
-						squareColor[i][1] = 0.0;
-						squareColor[i][2] = 0.0;
+						squareColor[i][0] = 0.8;
+						squareColor[i][1] = 0.4;
+						squareColor[i][2] = 0.4;
 					}
 					break;
 				case 2:
@@ -508,7 +576,7 @@ GLvoid drawScene()
 						squarePosition[i][2] += (float)z-5.5f;
 
 						squareColor[i][0] = 0.0;
-						squareColor[i][1] = 0.0;
+						squareColor[i][1] = 0.5;
 						squareColor[i][2] = 1.0;
 					}
 					break;
@@ -522,6 +590,18 @@ GLvoid drawScene()
 						squareColor[i][0] = 1.0;
 						squareColor[i][1] = 1.0;
 						squareColor[i][2] = 0.0;
+					}
+					break;
+				case 5:
+					for (int i = 0; i < 24; ++i)
+					{
+						squarePosition[i][0] += (float)x - 5.5f;
+						squarePosition[i][1] += (float)y - 5.5f;
+						squarePosition[i][2] += (float)z - 5.5f;
+
+						squareColor[i][0] = 1.0;
+						squareColor[i][1] = 0.0;
+						squareColor[i][2] = 1.0;
 					}
 					break;
 				}
@@ -792,6 +872,15 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			myX += 1;
 		}
 		break;
+	case 32:
+		myBlockID = (rand() % 5) + 1;
+		myRotX = 0;
+		myRotY = 0;
+		myRotZ = 0;
+		break;
+	case 27:
+		quit = 1;
+		break;
 	}
 	glutPostRedisplay();
 }
@@ -811,7 +900,7 @@ void initGame()
 			}
 		}
 	}
-
+	quit = 0;
 	tempSpace[0][0][0] = 1;
 	tempSpace[0][0][1] = 2;
 	tempSpace[0][0][2] = 3;
@@ -883,6 +972,294 @@ void updateGame()
 			}
 		}
 		
+		//z축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotZ; ++n)
+		{
+			for (int z = 0; z < 3; ++z)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][0][z];
+					myBlock[0][0][z] = myBlock[1][0][z];
+					myBlock[1][0][z] = myBlock[2][0][z];
+					myBlock[2][0][z] = myBlock[2][1][z];
+					myBlock[2][1][z] = myBlock[2][2][z];
+					myBlock[2][2][z] = myBlock[1][2][z];
+					myBlock[1][2][z] = myBlock[0][2][z];
+					myBlock[0][2][z] = myBlock[0][1][z];
+					myBlock[0][1][z] = temp;
+				}
+			}
+		}
+	}
+	else if (myBlockID == 2)
+	{
+		for (int i = 0; i < 3; ++i)//S자 블록 데이터 복사
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					myBlock[i][j][k] = block2[i][j][k];
+				}
+			}
+		}
+		//x축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotX; ++n)
+		{
+			for (int x = 0; x < 3; ++x)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp00 = myBlock[x][0][0];
+					myBlock[x][0][0] = myBlock[x][1][0];
+					myBlock[x][1][0] = myBlock[x][2][0];
+					myBlock[x][2][0] = myBlock[x][2][1];
+					myBlock[x][2][1] = myBlock[x][2][2];
+					myBlock[x][2][2] = myBlock[x][1][2];
+					myBlock[x][1][2] = myBlock[x][0][2];
+					myBlock[x][0][2] = myBlock[x][0][1];
+					myBlock[x][0][1] = temp00;
+				}
+			}
+		}
+
+		//y축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotY; ++n)
+		{
+			for (int y = 0; y < 3; ++y)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][y][0];
+					myBlock[0][y][0] = myBlock[1][y][0];
+					myBlock[1][y][0] = myBlock[2][y][0];
+					myBlock[2][y][0] = myBlock[2][y][1];
+					myBlock[2][y][1] = myBlock[2][y][2];
+					myBlock[2][y][2] = myBlock[1][y][2];
+					myBlock[1][y][2] = myBlock[0][y][2];
+					myBlock[0][y][2] = myBlock[0][y][1];
+					myBlock[0][y][1] = temp;
+				}
+			}
+		}
+
+		//z축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotZ; ++n)
+		{
+			for (int z = 0; z < 3; ++z)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][0][z];
+					myBlock[0][0][z] = myBlock[1][0][z];
+					myBlock[1][0][z] = myBlock[2][0][z];
+					myBlock[2][0][z] = myBlock[2][1][z];
+					myBlock[2][1][z] = myBlock[2][2][z];
+					myBlock[2][2][z] = myBlock[1][2][z];
+					myBlock[1][2][z] = myBlock[0][2][z];
+					myBlock[0][2][z] = myBlock[0][1][z];
+					myBlock[0][1][z] = temp;
+				}
+			}
+		}
+	}
+	else if (myBlockID == 3)
+	{
+		for (int i = 0; i < 3; ++i)//S자 블록 데이터 복사
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					myBlock[i][j][k] = block3[i][j][k];
+				}
+			}
+		}
+		//x축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotX; ++n)
+		{
+			for (int x = 0; x < 3; ++x)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp00 = myBlock[x][0][0];
+					myBlock[x][0][0] = myBlock[x][1][0];
+					myBlock[x][1][0] = myBlock[x][2][0];
+					myBlock[x][2][0] = myBlock[x][2][1];
+					myBlock[x][2][1] = myBlock[x][2][2];
+					myBlock[x][2][2] = myBlock[x][1][2];
+					myBlock[x][1][2] = myBlock[x][0][2];
+					myBlock[x][0][2] = myBlock[x][0][1];
+					myBlock[x][0][1] = temp00;
+				}
+			}
+		}
+
+		//y축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotY; ++n)
+		{
+			for (int y = 0; y < 3; ++y)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][y][0];
+					myBlock[0][y][0] = myBlock[1][y][0];
+					myBlock[1][y][0] = myBlock[2][y][0];
+					myBlock[2][y][0] = myBlock[2][y][1];
+					myBlock[2][y][1] = myBlock[2][y][2];
+					myBlock[2][y][2] = myBlock[1][y][2];
+					myBlock[1][y][2] = myBlock[0][y][2];
+					myBlock[0][y][2] = myBlock[0][y][1];
+					myBlock[0][y][1] = temp;
+				}
+			}
+		}
+
+		//z축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotZ; ++n)
+		{
+			for (int z = 0; z < 3; ++z)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][0][z];
+					myBlock[0][0][z] = myBlock[1][0][z];
+					myBlock[1][0][z] = myBlock[2][0][z];
+					myBlock[2][0][z] = myBlock[2][1][z];
+					myBlock[2][1][z] = myBlock[2][2][z];
+					myBlock[2][2][z] = myBlock[1][2][z];
+					myBlock[1][2][z] = myBlock[0][2][z];
+					myBlock[0][2][z] = myBlock[0][1][z];
+					myBlock[0][1][z] = temp;
+				}
+			}
+		}
+	}
+	else if (myBlockID == 4)
+	{
+		for (int i = 0; i < 3; ++i)//S자 블록 데이터 복사
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					myBlock[i][j][k] = block4[i][j][k];
+				}
+			}
+		}
+		//x축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotX; ++n)
+		{
+			for (int x = 0; x < 3; ++x)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp00 = myBlock[x][0][0];
+					myBlock[x][0][0] = myBlock[x][1][0];
+					myBlock[x][1][0] = myBlock[x][2][0];
+					myBlock[x][2][0] = myBlock[x][2][1];
+					myBlock[x][2][1] = myBlock[x][2][2];
+					myBlock[x][2][2] = myBlock[x][1][2];
+					myBlock[x][1][2] = myBlock[x][0][2];
+					myBlock[x][0][2] = myBlock[x][0][1];
+					myBlock[x][0][1] = temp00;
+				}
+			}
+		}
+
+		//y축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotY; ++n)
+		{
+			for (int y = 0; y < 3; ++y)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][y][0];
+					myBlock[0][y][0] = myBlock[1][y][0];
+					myBlock[1][y][0] = myBlock[2][y][0];
+					myBlock[2][y][0] = myBlock[2][y][1];
+					myBlock[2][y][1] = myBlock[2][y][2];
+					myBlock[2][y][2] = myBlock[1][y][2];
+					myBlock[1][y][2] = myBlock[0][y][2];
+					myBlock[0][y][2] = myBlock[0][y][1];
+					myBlock[0][y][1] = temp;
+				}
+			}
+		}
+
+		//z축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotZ; ++n)
+		{
+			for (int z = 0; z < 3; ++z)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][0][z];
+					myBlock[0][0][z] = myBlock[1][0][z];
+					myBlock[1][0][z] = myBlock[2][0][z];
+					myBlock[2][0][z] = myBlock[2][1][z];
+					myBlock[2][1][z] = myBlock[2][2][z];
+					myBlock[2][2][z] = myBlock[1][2][z];
+					myBlock[1][2][z] = myBlock[0][2][z];
+					myBlock[0][2][z] = myBlock[0][1][z];
+					myBlock[0][1][z] = temp;
+				}
+			}
+		}
+	}
+	else if (myBlockID == 5)
+	{
+		for (int i = 0; i < 3; ++i)//S자 블록 데이터 복사
+		{
+			for (int j = 0; j < 3; ++j)
+			{
+				for (int k = 0; k < 3; ++k)
+				{
+					myBlock[i][j][k] = block5[i][j][k];
+				}
+			}
+		}
+		//x축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotX; ++n)
+		{
+			for (int x = 0; x < 3; ++x)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp00 = myBlock[x][0][0];
+					myBlock[x][0][0] = myBlock[x][1][0];
+					myBlock[x][1][0] = myBlock[x][2][0];
+					myBlock[x][2][0] = myBlock[x][2][1];
+					myBlock[x][2][1] = myBlock[x][2][2];
+					myBlock[x][2][2] = myBlock[x][1][2];
+					myBlock[x][1][2] = myBlock[x][0][2];
+					myBlock[x][0][2] = myBlock[x][0][1];
+					myBlock[x][0][1] = temp00;
+				}
+			}
+		}
+
+		//y축 기준으로 키보드 누른만큼 회전
+		for (int n = 0; n < myRotY; ++n)
+		{
+			for (int y = 0; y < 3; ++y)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					int temp = myBlock[0][y][0];
+					myBlock[0][y][0] = myBlock[1][y][0];
+					myBlock[1][y][0] = myBlock[2][y][0];
+					myBlock[2][y][0] = myBlock[2][y][1];
+					myBlock[2][y][1] = myBlock[2][y][2];
+					myBlock[2][y][2] = myBlock[1][y][2];
+					myBlock[1][y][2] = myBlock[0][y][2];
+					myBlock[0][y][2] = myBlock[0][y][1];
+					myBlock[0][y][1] = temp;
+				}
+			}
+		}
+
 		//z축 기준으로 키보드 누른만큼 회전
 		for (int n = 0; n < myRotZ; ++n)
 		{
