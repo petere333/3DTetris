@@ -7,6 +7,7 @@
 #include <glm/glm/gtc/matrix_transform.hpp>
 #include <cstdlib>
 #include <cstdio>
+#include <ctime>
 #include "filein.h"
 
 
@@ -26,6 +27,12 @@ VBO_color[12][12][12];
 GLuint VAO_bg, VBO_bg, VBO_bgColor;
 GLuint VAO_preview, VBO_top, VBO_bottom, VBO_pvColor;
 
+GLuint VAO_out[12][12][12];
+GLuint VBO_out[12][12][12], VBO_outColor[12][12][12];
+
+int outSpace[12][12][12];
+int out[12];
+
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 GLvoid Keyboard(unsigned char key, int x, int y);
@@ -33,6 +40,8 @@ GLvoid GameLoop(int value);
 
 int frameCount = 0;
 int frames_needed = 33;
+int fCount = 0;
+int fneed = 3;
 int current_rot = 0;
 void make_vertexShaders();
 void make_fragmentShaders();
@@ -44,6 +53,7 @@ int collides(int dir);
 int isGameOver();
 void killBlock();
 void preview();
+void goout();
 
 int myBlockID;
 int myBlock[3][3][3];
@@ -51,6 +61,7 @@ int myRotX, myRotY, myRotZ;
 int myX, myY, myZ;
 int quit,bye;
 int canMove;
+int cheat;
 
 int blockCount = 0;
 
@@ -355,6 +366,84 @@ GLfloat originColor[24][3]
 	{0,0,0}
 };
 
+GLfloat outPosition[24][3]
+=
+{
+	//À­¸é
+	{0.5,0.5,0.5},
+	{-0.5,0.5,0.5},
+	{-0.5,0.5,-0.5},
+	{0.5,0.5,-0.5},
+
+	//¾Æ·§¸é
+	{0.5,-0.5,0.5},
+	{-0.5,-0.5,0.5},
+	{-0.5,-0.5,-0.5},
+	{0.5,-0.5,-0.5},
+
+	//¾Õ¸é
+	{0.5,0.5,0.5},
+	{0.5,-0.5,0.5},
+	{-0.5,-0.5,0.5},
+	{-0.5,0.5,0.5},
+
+	//µÞ¸é
+	{0.5,0.5,-0.5},
+	{0.5,-0.5,-0.5},
+	{-0.5,-0.5,-0.5},
+	{-0.5,0.5,-0.5},
+
+	//¿Þ¸é
+	{-0.5,0.5,0.5},
+	{-0.5,0.5,-0.5},
+	{-0.5,-0.5,-0.5},
+	{-0.5,-0.5,0.5},
+
+	//¿À¸¥¸é
+	{0.5,0.5,0.5},
+	{0.5,0.5,-0.5},
+	{0.5,-0.5,-0.5},
+	{0.5,-0.5,0.5}
+};
+GLfloat outColor[24][3]
+=
+{
+	//À­¸é
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+
+	//¾Æ·§¸é
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+
+	//¾Õ¸é
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+
+	//µÞ¸é
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+
+	//¿Þ¸é
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+
+	//¿À¸¥¸é
+	{0,0,0},
+	{0,0,0},
+	{0,0,0},
+	{0,0,0}
+};
 GLfloat top[4][3]
 =
 {
@@ -434,6 +523,14 @@ GLvoid GameLoop(int value)
 {
 	updateGame();
 	killBlock();
+	
+
+	fCount += 1;
+	if (fCount == fneed)
+	{
+		goout();
+		fCount = 0;
+	}
 	glutPostRedisplay();
 	if (quit == 1)
 	{
@@ -567,6 +664,26 @@ void InitBuffer()
 				GLint cAttribute1 = glGetAttribLocation(shaderID, "vColor");
 				glVertexAttribPointer(cAttribute1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 				glEnableVertexAttribArray(cAttribute1);
+
+				glGenVertexArrays(1, &VAO_out[i][j][k]);
+				glGenBuffers(1, &VBO_out[i][j][k]);
+				glGenBuffers(1, &VBO_outColor[i][j][k]);
+
+				glBindVertexArray(VAO_out[i][j][k]);
+
+				glBindBuffer(GL_ARRAY_BUFFER, VBO_out[i][j][k]);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(outPosition), outPosition, GL_STATIC_DRAW);
+
+				GLint pAttribute2 = glGetAttribLocation(shaderID, "vPos");
+				glVertexAttribPointer(pAttribute2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+				glEnableVertexAttribArray(pAttribute2);
+
+				glBindBuffer(GL_ARRAY_BUFFER, VBO_outColor[i][j][k]);
+				glBufferData(GL_ARRAY_BUFFER, sizeof(outColor), outColor, GL_STATIC_DRAW);
+
+				GLint cAttribute2 = glGetAttribLocation(shaderID, "vColor");
+				glVertexAttribPointer(cAttribute2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+				glEnableVertexAttribArray(cAttribute2);
 			}
 		}
 	}
@@ -793,6 +910,109 @@ GLvoid drawScene()
 		}
 	}
 
+	for (int z = 0; z < 12; ++z)
+	{
+		if (out[z] > 0)
+		{
+			for (int x = 0; x < 12; ++x)
+			{
+				for (int y = 0; y < 12; ++y)
+				{
+					switch(outSpace[x][z][y])
+					{ 
+					case 1:
+						for (int i = 0; i < 24; ++i)
+						{
+							outPosition[i][0] += (float)x - 5.5f+(float)out[z];
+							outPosition[i][2] += (float)y - 5.5f;
+							outPosition[i][1] += (float)z - 5.5f;
+
+							outColor[i][0] = 0.8;
+							outColor[i][1] = 0.4;
+							outColor[i][2] = 0.4;
+						}
+						break;
+					case 2:
+						for (int i = 0; i < 24; ++i)
+						{
+							outPosition[i][0] += (float)x - 5.5f+(float)out[z];
+							outPosition[i][2] += (float)y - 5.5f;
+							outPosition[i][1] += (float)z - 5.5f;
+
+							outColor[i][0] = 0.0;
+							outColor[i][1] = 1.0;
+							outColor[i][2] = 0.0;
+						}
+						break;
+					case 3:
+						for (int i = 0; i < 24; ++i)
+						{
+							outPosition[i][0] += (float)x - 5.5f + (float)out[z];
+							outPosition[i][2] += (float)y - 5.5f;
+							outPosition[i][1] += (float)z - 5.5f;
+
+							outColor[i][0] = 0.0;
+							outColor[i][1] = 0.5;
+							outColor[i][2] = 1.0;
+						}
+						break;
+					case 4:
+						for (int i = 0; i < 24; ++i)
+						{
+							outPosition[i][0] += (float)x - 5.5f + (float)out[z];
+							outPosition[i][2] += (float)y - 5.5f;
+							outPosition[i][1] += (float)z - 5.5f;
+							
+							outColor[i][0] = 1.0;
+							outColor[i][1] = 1.0;
+							outColor[i][2] = 0.0;
+						}
+						break;
+					case 5:
+						for (int i = 0; i < 24; ++i)
+						{
+							outPosition[i][0] += (float)x - 5.5f + (float)out[z];
+							outPosition[i][2] += (float)y - 5.5f;
+							outPosition[i][1] += (float)z - 5.5f;
+							
+							outColor[i][0] = 1.0;
+							outColor[i][1] = 0.0;
+							outColor[i][2] = 1.0;
+						}
+						break;
+					}
+					glBindVertexArray(VAO_out[x][y][z]);
+
+					glBindBuffer(GL_ARRAY_BUFFER, VBO_out[x][y][z]);
+					glBufferData(GL_ARRAY_BUFFER, sizeof(outPosition), outPosition, GL_STATIC_DRAW);
+
+					GLint pAttribute4 = glGetAttribLocation(shaderID, "vPos");
+					glVertexAttribPointer(pAttribute4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+					glEnableVertexAttribArray(pAttribute4);
+
+					glBindBuffer(GL_ARRAY_BUFFER, VBO_outColor[x][y][z]);
+					glBufferData(GL_ARRAY_BUFFER, sizeof(outColor), outColor, GL_STATIC_DRAW);
+
+					GLint cAttribute4 = glGetAttribLocation(shaderID, "vColor");
+					glVertexAttribPointer(cAttribute4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+					glEnableVertexAttribArray(cAttribute4);
+
+					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					glDrawArrays(GL_QUADS, 0, 24);
+					for (int i = 0; i < 24; ++i)
+					{
+						for (int j = 0; j < 3; ++j)
+						{
+							outPosition[i][j] = square[i][j];
+							outColor[i][j] = originColor[i][j];
+						}
+					}
+				}
+			}
+		}
+	}
+
+
 	glutSwapBuffers();
 }
 GLvoid Reshape(int w, int h)
@@ -1013,6 +1233,10 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			}
 		}
 		myBlockID = (rand() % 5) + 1;
+		if (cheat > 0)
+		{
+			myBlockID = 3;
+		}
 		myRotX = 0;
 		myRotY = 0;
 		myRotZ = 0;
@@ -1041,6 +1265,9 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	case 27:
 		quit = 1;
 		break;
+	case '0':
+		cheat *= -1;
+		break;
 	}
 	glutPostRedisplay();
 }
@@ -1059,8 +1286,10 @@ void initGame()
 				tempSpace[i][j][k] = 0;
 				blockSpace[i][j][k] = 0;
 				previewSpace[i][j][k] = 0;
+				outSpace[i][j][k] = 0;
 			}
 		}
+		out[i] = 0;
 	}
 	quit = 0;
 	bye = 0;
@@ -1072,6 +1301,7 @@ void initGame()
 	myX = 5;
 	myY = 5;
 	myZ = 9;
+	cheat = -1;
 }
 void updateGame()
 {
@@ -1474,55 +1704,57 @@ void updateGame()
 		}
 	}
 	preview();
-	frameCount += 1;
-	/*
-	if (frameCount == frames_needed)
+	
+	if (cheat < 0)
 	{
-		if (isEnded() == 0)
+		frameCount += 1;
+		if (frameCount == frames_needed)
 		{
-			myZ -= 1;
-		}
-		else
-		{
-			for (int i = 0; i < 3; ++i)
+			if (isEnded() == 0)
 			{
-				for (int j = 0; j < 3; ++j)
+				myZ -= 1;
+			}
+			else
+			{
+				for (int i = 0; i < 3; ++i)
 				{
-					for (int k = 0; k < 3; ++k)
+					for (int j = 0; j < 3; ++j)
 					{
-						tempSpace[myX + i][myY + j][myZ + k] += myBlock[i][j][k];
+						for (int k = 0; k < 3; ++k)
+						{
+							tempSpace[myX + i][myY + j][myZ + k] += myBlock[i][j][k];
+						}
 					}
 				}
+				myBlockID = (rand() % 5) + 1;
+				myRotX = 0;
+				myRotY = 0;
+				myRotZ = 0;
+				myZ = 9;
+				if (myX > 9)
+				{
+					myX = 9;
+				}
+				if (myX < 0)
+				{
+					myX = 0;
+				}
+				if (myY > 9)
+				{
+					myY = 9;
+				}
+				if (myY < 0)
+				{
+					myY = 0;
+				}
+				if (isGameOver() == 1)
+				{
+					quit = 1;
+				}
 			}
-			myBlockID = (rand() % 5) + 1;
-			myRotX = 0;
-			myRotY = 0;
-			myRotZ = 0;
-			myZ = 9;
-			if (myX > 9)
-			{
-				myX = 9;
-			}
-			if (myX < 0)
-			{
-				myX = 0;
-			}
-			if (myY > 9)
-			{
-				myY = 9;
-			}
-			if (myY < 0)
-			{
-				myY = 0;
-			}
-			if (isGameOver() == 1)
-			{
-				quit = 1;
-			}
+			frameCount = 0;
 		}
-		frameCount = 0;
 	}
-	*/
 }
 
 void killBlock()
@@ -1549,6 +1781,17 @@ void killBlock()
 	}
 	if (target != -1)
 	{
+		out[target] = 1;
+		for (int x = 0; x < 12; ++x)
+		{
+			for (int y = 0; y < 12; ++y)
+			{
+				outSpace[x][target][y] = tempSpace[x][y][target];
+				printf("%d ",outSpace[x][y][target]);
+			}
+			printf("\n");
+		}
+		
 		for (int z = target; z < 11; ++z)
 		{
 			for (int x = 0; x < 12; ++x)
@@ -1572,6 +1815,7 @@ void killBlock()
 		if(frames_needed > 15)
 			frames_needed -= 1;
 	}
+
 }
 
 
@@ -1740,4 +1984,30 @@ int isGameOver()
 		}
 	}
 	return over;
+}
+
+void goout()
+{
+	for (int z = 0; z < 12; ++z)
+	{
+		if (out[z] > 0)
+		{
+			if (out[z] > 13)
+			{
+				out[z] = 0;
+				for (int x = 0; x < 12; ++x)
+				{
+					for (int y = 0; y < 12; ++y)
+					{
+						outSpace[x][y][z] = 0;
+					}
+				}
+			}
+			else
+			{
+				out[z] += 1;
+			}
+			
+		}
+	}
 }
