@@ -41,7 +41,7 @@ GLvoid GameLoop(int value);
 int frameCount = 0;
 int frames_needed = 33;
 int fCount = 0;
-int fneed = 3;
+int fneed = 2;
 int current_rot = 0;
 void make_vertexShaders();
 void make_fragmentShaders();
@@ -483,6 +483,8 @@ glm::mat4 model = glm::mat4(1.0f);
 glm::mat4 trans;
 glm::mat4 rot = glm::mat4(1.0f);
 
+int lookdown = 0;
+
 
 int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
@@ -490,7 +492,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutInit(&argc, argv); // glut 초기화
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH); // 디스플레이 모드 설정
 	glutInitWindowPosition(0, 0); // 윈도우의 위치 지정
-	glutInitWindowSize(800, 600); // 윈도우의 크기 지정
+	glutInitWindowSize(1200, 900); // 윈도우의 크기 지정
 	glutCreateWindow("project"); // 윈도우 생성(윈도우 이름)
 
 	//--- GLEW 초기화하기
@@ -513,7 +515,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	make_vertexShaders();
 	make_fragmentShaders();
 	shaderID = make_shaderProgram();
-	srand((unsigned int)time(NULL));
+	
 	InitBuffer();
 	initGame();
 	glutMainLoop(); // 이벤트 처리 시작
@@ -1025,10 +1027,41 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	{
 	case 'O':
 	case 'o'://회전
-		rot = glm::mat4(1.0f);
-		rot = glm::rotate(rot, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		current_rot = (current_rot + 1) % 4;
-		model = model * rot;
+		if (lookdown == 0)
+		{
+			rot = glm::mat4(1.0f);
+			rot = glm::rotate(rot, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			current_rot = (current_rot + 1) % 4;
+			model = model * rot;
+		}
+		break;
+	case 'P':
+	case 'p':
+		int temp;
+		temp = current_rot;
+		for (int i = 0; i < temp; ++i)
+		{
+			rot = glm::mat4(1.0f);
+			rot = glm::rotate(rot, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			current_rot -= 1;
+			model = model * rot;
+		}
+		if (lookdown == 0)
+		{
+			rot = glm::mat4(1.0f);
+			rot = glm::rotate(rot, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			model = model * rot;
+			lookdown = 1;
+			break;
+		}
+		else
+		{
+			rot = glm::mat4(1.0f);
+			rot = glm::rotate(rot, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			model = model * rot;
+			lookdown = 0;
+			break;
+		}
 		break;
 	case 'j':
 	case 'J':
@@ -1276,6 +1309,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 void initGame()
 {
 	//게임 공간 지우기
+	
 	for (int i = 0; i < 12; ++i)
 	{
 		for (int j = 0; j < 12; ++j)
@@ -1291,10 +1325,31 @@ void initGame()
 		}
 		out[i] = 0;
 	}
+	srand((unsigned int)time(NULL));
+	int bound = rand() % 2;
+	for (int z = 2; z >= 0; --z)
+	{
+		for(int tx=-bound;tx<bound;++tx)
+		{
+			int x = tx;
+			if (x < 0)
+			{
+				x += 12;
+			}
+			for (int ty = 0; ty < 12; ++ty)
+			{
+				tempSpace[x][ty][z] = z+1;
+				tempSpace[ty][x][z] = z+1;
+			}
+		}
+		srand((unsigned int)time(NULL));
+		bound += rand() % 3;
+	}
 	quit = 0;
 	bye = 0;
 	blockCount = 0;
-	myBlockID = 1;
+	srand((unsigned int)time(NULL));
+	myBlockID = rand() % 5 + 1;
 	myRotX = 0;
 	myRotY = 0;
 	myRotZ = 0;
