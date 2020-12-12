@@ -48,7 +48,7 @@ void make_fragmentShaders();
 void InitBuffer();
 void initGame();
 void updateGame();
-int isEnded();
+int isEnded(); 
 int collides(int dir);
 int isGameOver();
 void killBlock();
@@ -60,10 +60,9 @@ int myBlock[3][3][3];
 int myRotX, myRotY, myRotZ;
 int myX, myY, myZ;
 int quit,bye;
-int canMove;
 int cheat;
 
-int blockCount = 0;
+
 
 //1=S 2=L 3=I 4=T 5=O
 int block1[3][3][3]//S
@@ -1326,7 +1325,7 @@ void initGame()
 		out[i] = 0;
 	}
 	srand((unsigned int)time(NULL));
-	int bound = rand() % 2;
+	int bound = rand()%2;
 	for (int z = 2; z >= 0; --z)
 	{
 		for(int tx=-bound;tx<bound;++tx)
@@ -1342,12 +1341,10 @@ void initGame()
 				tempSpace[ty][x][z] = z+1;
 			}
 		}
-		srand((unsigned int)time(NULL));
-		bound += rand() % 3;
+		bound += rand() % 2+1;
 	}
 	quit = 0;
 	bye = 0;
-	blockCount = 0;
 	srand((unsigned int)time(NULL));
 	myBlockID = rand() % 5 + 1;
 	myRotX = 0;
